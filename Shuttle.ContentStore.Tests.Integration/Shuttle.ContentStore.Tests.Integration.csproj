@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>netcoreapp2.1</TargetFramework>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Content Include=".files\integration.txt">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include=".config\McAfee.config">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Include=".config\Opswat.config">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Include=".files\benign.xlsx">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Include=".files\sanitize.xlsm">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.6.1" />
+		<PackageReference Include="Moq" Version="4.14.5" />
+		<PackageReference Include="NUnit" Version="3.12.0" />
+		<PackageReference Include="NUnit3TestAdapter" Version="3.16.1">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Shuttle.Core.Data" Version="11.0.4" />
+		<PackageReference Include="Shuttle.Core.Transactions" Version="10.0.2" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Shuttle.ContentStore.McAfee\Shuttle.ContentStore.McAfee.csproj" />
+		<ProjectReference Include="..\Shuttle.ContentStore.Opswat\Shuttle.ContentStore.Opswat.csproj" />
+		<ProjectReference Include="..\Shuttle.ContentStore.Tests\Shuttle.ContentStore.Tests.csproj" />
+		<ProjectReference Include="..\Shuttle.ContentStore\Shuttle.ContentStore.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="testhost.dll.config">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

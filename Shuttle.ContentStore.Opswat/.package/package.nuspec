@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<package>
+	<metadata>
+		<id>Shuttle.ContentStore.Opswat</id>
+		<version>1.0.0</version>
+		<authors>Eben Roux</authors>
+		<owners>Eben Roux</owners>
+		<license type="expression">BSD-3-Clause</license>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<icon>images\logo.png</icon>
+		<repository type="git" url="https://github.com/Shuttle/Shuttle.ContentStore.git" />
+		<description>OPSWAT implementation of the relevant document store interfaces.</description>
+		<copyright>Copyright (c) 2020, Eben Roux</copyright>
+		<tags>content document malware virus</tags>
+		<dependencies>
+      <dependency id="Shuttle.ContentStore" version="1.0.0" />
+      <dependency id="Microsoft.CSharp" version="4.7.0" />
+      <dependency id="RestSharp" version="106.11.4" />
+      <dependency id="Shuttle.Core.Configuration" version="10.0.3" />
+      <dependency id="Shuttle.Core.Container" version="11.1.3" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\..\..\.media\logo.png" target="images" />
+		<file src="lib\**\*.*" target="lib" />
+	</files>
+</package>

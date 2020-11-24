@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<package>
+	<metadata>
+		<id>Shuttle.ContentStore.McAfee</id>
+		<version>#{SemanticVersion}#</version>
+		<authors>Eben Roux</authors>
+		<owners>Eben Roux</owners>
+		<icon>images\logo.png</icon>
+		<repository type="git" url="https://github.com/Shuttle/Shuttle.ContentStore.git" />
+		<description>McAfee ATD implementation of the relevant document store interfaces.</description>
+		<copyright>Copyright (c) #{Year}#, Eben Roux</copyright>
+		<tags>content document malware virus</tags>
+		<dependencies>
+#{Dependencies}#
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="..\..\..\.media\logo.png" target="images" />
+		<file src="lib\**\*.*" target="lib" />
+	</files>
+</package>
