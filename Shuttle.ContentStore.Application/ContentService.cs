@@ -1,6 +1,7 @@
 ﻿using System;
 using Newtonsoft.Json;
 using RestSharp;
+using RestSharp.Serializers.NewtonsoftJson;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore.Application
@@ -17,6 +18,8 @@ namespace Shuttle.ContentStore.Application
             _endpoint = configuration.ApiUrl;
 
             _client = new RestClient(configuration.ApiUrl);
+
+            _client.UseNewtonsoftJson();
         }
 
         public Guid Register(Guid referenceId, string fileName, string contentType, byte[] bytes,

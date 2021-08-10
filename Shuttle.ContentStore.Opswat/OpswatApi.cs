@@ -1,4 +1,5 @@
 ﻿using RestSharp;
+using RestSharp.Serializers.NewtonsoftJson;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore.Opswat
@@ -22,6 +23,8 @@ namespace Shuttle.ContentStore.Opswat
             _client = new RestClient(configuration.ApiUrl);
 
             _client.AddDefaultHeader("apikey", configuration.ApiKey);
+
+            _client.UseNewtonsoftJson();
         }
 
         public T Get<T>(RestRequest request) where T : new()

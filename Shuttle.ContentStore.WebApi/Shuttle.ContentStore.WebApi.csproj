@@ -11,11 +11,11 @@
     <PackageReference Include="Ninject" Version="3.3.4" />
     <PackageReference Include="Shuttle.Core.Data" Version="11.0.4" />
     <PackageReference Include="Shuttle.Core.Data.Http" Version="11.0.0" />
-    <PackageReference Include="Shuttle.Core.Log4Net" Version="10.0.3" />
+    <PackageReference Include="Shuttle.Core.Log4Net" Version="10.0.4" />
     <PackageReference Include="Shuttle.Core.Ninject" Version="10.0.7" />
     <PackageReference Include="Shuttle.Core.Transactions" Version="10.0.3" />
     <PackageReference Include="Shuttle.Esb.AzureMQ" Version="11.0.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
   </ItemGroup>
 
   <ItemGroup>

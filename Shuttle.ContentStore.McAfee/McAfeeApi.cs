@@ -3,6 +3,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using RestSharp;
+using RestSharp.Serializers.NewtonsoftJson;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Logging;
 using Shuttle.Core.Threading;
@@ -43,6 +44,8 @@ namespace Shuttle.ContentStore.McAfee
             _client = new RestClient(configuration.Url);
 
             _client.AddDefaultHeader("Accept", "application/vnd.ve.v1.0+json");
+
+            _client.UseNewtonsoftJson();
 
             var cancellationToken = _cancellationTokenSource.Token;
 

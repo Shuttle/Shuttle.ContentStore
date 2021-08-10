@@ -16,7 +16,8 @@
 		<dependencies>
       <dependency id="Microsoft.CSharp" version="4.7.0" />
       <dependency id="Newtonsoft.Json" version="13.0.1" />
-      <dependency id="RestSharp" version="106.11.4" />
+      <dependency id="RestSharp" version="106.12.0" />
+      <dependency id="RestSharp.Serializers.NewtonsoftJson" version="106.12.0" />
       <dependency id="Shuttle.Esb.AzureMQ" version="11.0.2" />
 		</dependencies>
 	</metadata>

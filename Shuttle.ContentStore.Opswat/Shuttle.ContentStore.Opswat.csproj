@@ -6,11 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="106.12.0" />
     <PackageReference Include="Shuttle.ContentStore" Version="1.0.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="RestSharp" Version="106.11.4" />
-    <PackageReference Include="Shuttle.Core.Configuration" Version="10.0.3" />
-    <PackageReference Include="Shuttle.Core.Container" Version="11.1.3" />
+    <PackageReference Include="RestSharp" Version="106.12.0" />
+    <PackageReference Include="Shuttle.Core.Configuration" Version="10.0.4" />
+    <PackageReference Include="Shuttle.Core.Container" Version="11.2.3" />
   </ItemGroup>
 
   <ItemGroup>
