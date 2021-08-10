@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Include="RestSharp" Version="106.11.4" />
+    <PackageReference Include="RestSharp" Version="106.12.0" />
     <PackageReference Include="Shuttle.Esb.AzureMQ" Version="11.0.2" />
   </ItemGroup>
 
