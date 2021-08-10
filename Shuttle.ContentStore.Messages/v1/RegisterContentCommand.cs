@@ -2,7 +2,7 @@
 
 namespace Shuttle.ContentStore.Messages.v1
 {
-    public class PollDocumentCommand
+    public class RegisterContentCommand
     {
         public Guid Id { get; set; }
     }

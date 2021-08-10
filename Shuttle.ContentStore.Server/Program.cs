@@ -46,7 +46,7 @@ namespace Shuttle.ContentStore.Server
 
             ServiceBus.Register(_container);
 
-            _container.Resolve<IDatabaseContextFactory>().ConfigureWith("DocumentStore");
+            _container.Resolve<IDatabaseContextFactory>().ConfigureWith("ContentStore");
 
             _bus = ServiceBus.Create(_container).Start();
         }

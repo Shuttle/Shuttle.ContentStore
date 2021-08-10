@@ -11,7 +11,7 @@
 		<icon>images\logo.png</icon>
 		<repository type="git" url="https://github.com/Shuttle/Shuttle.ContentStore.git" />
 		<description>System messages related to content store activities.</description>
-		<copyright>Copyright (c) 2020, Eben Roux</copyright>
+		<copyright>Copyright (c) 2021, Eben Roux</copyright>
 		<tags>content document malware virus</tags>
 		<dependencies>
 

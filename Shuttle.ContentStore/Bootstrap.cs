@@ -10,9 +10,9 @@ namespace Shuttle.ContentStore
         {
             Guard.AgainstNull(registry, nameof(registry));
 
-            registry.AttemptRegister<IDocumentQueryFactory, DocumentQueryFactory>();
-            registry.AttemptRegister<IDocumentRepository, DocumentRepository>();
-            registry.AttemptRegister<IDocumentQuery, DocumentQuery>();
+            registry.AttemptRegister<IContentQueryFactory, ContentQueryFactory>();
+            registry.AttemptRegister<IContentRepository, ContentRepository>();
+            registry.AttemptRegister<IContentQuery, ContentQuery>();
         }
     }
 }

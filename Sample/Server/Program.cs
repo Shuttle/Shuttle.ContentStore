@@ -38,7 +38,7 @@ namespace Server
 
             ServiceBus.Register(container);
 
-            container.Resolve<ISubscriptionManager>().Subscribe<DocumentProcessedEvent>();
+            container.Resolve<ISubscriptionManager>().Subscribe<ContentProcessedEvent>();
 
             _bus = ServiceBus.Create(container).Start();
         }

@@ -5,31 +5,31 @@ using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore
 {
-    public class Document
+    public class Content
     {
         private byte[] _sanitizedContent;
         private readonly List<StatusEvent> _statusEvents = new List<StatusEvent>();
         private readonly Dictionary<string,string> _properties = new Dictionary<string, string>();
 
-        public Document(Guid id, Guid referenceId, string fileName, string contentType, byte[] content,
+        public Content(Guid id, Guid referenceId, string fileName, string contentType, byte[] bytes,
             string systemName, string username, DateTime effectiveFromDate)
         {
             Guard.AgainstNullOrEmptyString(fileName, nameof(fileName));
             Guard.AgainstNullOrEmptyString(contentType, nameof(contentType));
-            Guard.AgainstNull(content, nameof(content));
+            Guard.AgainstNull(bytes, nameof(bytes));
             Guard.AgainstNullOrEmptyString(systemName, nameof(systemName));
             Guard.AgainstNullOrEmptyString(username, nameof(username));
 
-            if (content.Length == 0)
+            if (bytes.Length == 0)
             {
-                throw new ArgumentException($"Argument '{nameof(content)}' may not have a zero length.");
+                throw new ArgumentException($"Argument '{nameof(bytes)}' may not have a zero length.");
             }
 
             Id = id;
             ReferenceId = referenceId;
             FileName = fileName;
             ContentType = contentType;
-            Content = content;
+            Bytes = bytes;
             SystemName = systemName;
             Username = username;
             EffectiveFromDate = effectiveFromDate;
@@ -43,15 +43,15 @@ namespace Shuttle.ContentStore
         public Guid Id { get; }
         public string FileName { get; }
         public string ContentType { get; }
-        public byte[] Content { get; }
+        public byte[] Bytes { get; }
 
-        public byte[] SanitizedContent
+        public byte[] SanitizedBytes
         {
             get
             {
-                if (!HasSanitizedContent)
+                if (!HasSanitizedBytes)
                 {
-                    throw new InvalidOperationException("The document does not contain sanitized content.");
+                    throw new InvalidOperationException("The content does not contain sanitized bytes.");
                 }
 
                 return _sanitizedContent;
@@ -59,7 +59,7 @@ namespace Shuttle.ContentStore
             private set => _sanitizedContent = value;
         }
 
-        public Document WithEffectiveToDate(DateTime effectiveToDate)
+        public Content WithEffectiveToDate(DateTime effectiveToDate)
         {
             if (effectiveToDate < EffectiveFromDate)
             {
@@ -75,21 +75,21 @@ namespace Shuttle.ContentStore
         public string SystemName { get; }
         public string Username { get; }
         public ServiceStatus Status { get; private set; }
-        public bool HasSanitizedContent => _sanitizedContent != null;
+        public bool HasSanitizedBytes => _sanitizedContent != null;
 
         public Guid ReferenceId { get; }
         public DateTime EffectiveFromDate { get; }
         public DateTime EffectiveToDate { get; private set; }
 
-        public Document Cleared()
+        public Content Passed()
         {
-            if (Status == ServiceStatus.Suspicious || Status == ServiceStatus.Cleared)
+            if (Status == ServiceStatus.Suspicious || Status == ServiceStatus.Passed)
             {
                 throw new InvalidOperationException(
-                    $"Cannot change status to '{ServiceStatus.Cleared}' since it is already '{Status}'.");
+                    $"Cannot change status to '{ServiceStatus.Passed}' since it is already '{Status}'.");
             }
 
-            OnStatusEvent(ServiceStatus.Cleared);
+            OnStatusEvent(ServiceStatus.Passed);
 
             return this;
         }
@@ -112,9 +112,9 @@ namespace Shuttle.ContentStore
             StatusDateRegistered = dateRegistered;
         }
 
-        public Document Suspicious()
+        public Content Suspicious()
         {
-            if (Status == ServiceStatus.Suspicious || Status == ServiceStatus.Cleared)
+            if (Status == ServiceStatus.Suspicious || Status == ServiceStatus.Passed)
             {
                 throw new InvalidOperationException(
                     $"Cannot change status to '{ServiceStatus.Suspicious}' since it is already '{Status}'.");
@@ -125,7 +125,7 @@ namespace Shuttle.ContentStore
             return this;
         }
 
-        public Document WithSanitizedContent(byte[] sanitizedContent)
+        public Content WithSanitizedContent(byte[] sanitizedContent)
         {
             Guard.AgainstNull(sanitizedContent, nameof(sanitizedContent));
 
@@ -134,7 +134,7 @@ namespace Shuttle.ContentStore
                 throw new ArgumentException($"Argument '{nameof(sanitizedContent)}' may not have a zero length.");
             }
 
-            SanitizedContent = sanitizedContent;
+            SanitizedBytes = sanitizedContent;
 
             return this;
         }
@@ -174,7 +174,7 @@ namespace Shuttle.ContentStore
             return _statusEvents.AsReadOnly();
         }
 
-        public Document Processing()
+        public Content Processing()
         {
             if (Status != ServiceStatus.Registered)
             {
@@ -192,7 +192,7 @@ namespace Shuttle.ContentStore
             return new ReadOnlyDictionary<string, string>(_properties);
         }
 
-        public Document SetProperty(string name, string value)
+        public Content SetProperty(string name, string value)
         {
             if (ContainsProperty(name))
             {

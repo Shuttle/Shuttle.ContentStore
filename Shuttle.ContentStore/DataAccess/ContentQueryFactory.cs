@@ -6,11 +6,11 @@ using Shuttle.Core.Data;
 
 namespace Shuttle.ContentStore.DataAccess
 {
-    public class DocumentQueryFactory : IDocumentQueryFactory
+    public class ContentQueryFactory : IContentQueryFactory
     {
-        public IQuery Save(Document document)
+        public IQuery Save(Content content)
         {
-            Guard.AgainstNull(document, nameof(document));
+            Guard.AgainstNull(content, nameof(content));
 
             return RawQuery.Create(@"
 if exists
@@ -18,23 +18,23 @@ if exists
     select
         null
     from
-        dbo.Document
+        dbo.Content
     where
         Id = @Id
 )
     update
-        dbo.Document
+        dbo.Content
     set
         EffectiveToDate = @EffectiveToDate,
         Status = @Status,
         StatusDateRegistered = @StatusDateRegistered,
-        SanitizedContent = @SanitizedContent
+        SanitizedBytes = @SanitizedBytes
     where
         Id = @Id
 else
     begin
         update
-            dbo.Document
+            dbo.Content
         set
             EffectiveToDate = @EffectiveFromDate
         where
@@ -43,7 +43,7 @@ else
             EffectiveToDate = @EffectiveToDate;
 
         insert into
-            dbo.Document
+            dbo.Content
             (
                 Id,
                 ReferenceId,
@@ -51,7 +51,7 @@ else
                 EffectiveToDate,
                 FileName,
                 ContentType,
-                Content,
+                Bytes,
                 SystemName,
                 Username,
                 Status,
@@ -65,7 +65,7 @@ else
                 @EffectiveToDate,
                 @FileName,
                 @ContentType,
-                @Content,
+                @Bytes,
                 @SystemName,
                 @Username,
                 @Status,
@@ -73,53 +73,53 @@ else
             );
     end
 ")
-                .AddParameterValue(Columns.Id, document.Id)
-                .AddParameterValue(Columns.ReferenceId, document.ReferenceId)
-                .AddParameterValue(Columns.EffectiveFromDate, document.EffectiveFromDate)
-                .AddParameterValue(Columns.EffectiveToDate, document.EffectiveToDate)
-                .AddParameterValue(Columns.FileName, document.FileName)
-                .AddParameterValue(Columns.ContentType, document.ContentType)
-                .AddParameterValue(Columns.Content, document.Content)
-                .AddParameterValue(Columns.SystemName, document.SystemName)
-                .AddParameterValue(Columns.Username, document.Username)
-                .AddParameterValue(Columns.Status, document.Status)
-                .AddParameterValue(Columns.StatusDateRegistered, document.StatusDateRegistered)
-                .AddParameterValue(Columns.SanitizedContent,
-                    document.HasSanitizedContent ? document.SanitizedContent : null);
+                .AddParameterValue(Columns.Id, content.Id)
+                .AddParameterValue(Columns.ReferenceId, content.ReferenceId)
+                .AddParameterValue(Columns.EffectiveFromDate, content.EffectiveFromDate)
+                .AddParameterValue(Columns.EffectiveToDate, content.EffectiveToDate)
+                .AddParameterValue(Columns.FileName, content.FileName)
+                .AddParameterValue(Columns.ContentType, content.ContentType)
+                .AddParameterValue(Columns.Bytes, content.Bytes)
+                .AddParameterValue(Columns.SystemName, content.SystemName)
+                .AddParameterValue(Columns.Username, content.Username)
+                .AddParameterValue(Columns.Status, content.Status)
+                .AddParameterValue(Columns.StatusDateRegistered, content.StatusDateRegistered)
+                .AddParameterValue(Columns.SanitizedBytes,
+                    content.HasSanitizedBytes ? content.SanitizedBytes : null);
         }
 
-        public IQuery RemoveStatusEvents(Guid documentId)
+        public IQuery RemoveStatusEvents(Guid contentId)
         {
             return RawQuery.Create(@"
 delete
 from
-    dbo.DocumentStatusEvent
+    dbo.ContentStatusEvent
 where
-    DocumentId = @Id
+    ContentId = @Id
 ")
-                .AddParameterValue(Columns.Id, documentId);
+                .AddParameterValue(Columns.Id, contentId);
         }
 
-        public IQuery SaveStatusEvent(Guid documentId, int sequenceNumber, Document.StatusEvent statusEvent)
+        public IQuery SaveStatusEvent(Guid contentId, int sequenceNumber, Content.StatusEvent statusEvent)
         {
             return RawQuery.Create(@"
 insert into
-    dbo.DocumentStatusEvent
+    dbo.ContentStatusEvent
     (
-        DocumentId,
+        ContentId,
         SequenceNumber,
         Status,
         DateRegistered
     )
 values
     (
-        @DocumentId,
+        @ContentId,
         @SequenceNumber,
         @Status,
         @DateRegistered
     )
 ")
-                .AddParameterValue(Columns.DocumentId, documentId)
+                .AddParameterValue(Columns.ContentId, contentId)
                 .AddParameterValue(Columns.SequenceNumber, sequenceNumber)
                 .AddParameterValue(Columns.Status, statusEvent.Status)
                 .AddParameterValue(Columns.DateRegistered, statusEvent.DateRegistered);
@@ -139,10 +139,10 @@ select
 	Username,
 	Status,
 	StatusDateRegistered,
-	Content,
-	SanitizedContent
+	Bytes,
+	SanitizedBytes
 from
-	Document
+	Content
 where
 	Id = @Id
 ")
@@ -153,51 +153,51 @@ where
         {
             return RawQuery.Create(@"
 select
-	DocumentId,
+	ContentId,
 	SequenceNumber,
 	Status,
 	DateRegistered
 from
-	DocumentStatusEvent
+	ContentStatusEvent
 where
-	DocumentId = @DocumentId
+	ContentId = @ContentId
 order by
     SequenceNumber
 ")
-                .AddParameterValue(Columns.DocumentId, id);
+                .AddParameterValue(Columns.ContentId, id);
         }
 
-        public IQuery RemoveProperties(Guid documentId)
+        public IQuery RemoveProperties(Guid contentId)
         {
             return RawQuery.Create(@"
 delete
 from
-    dbo.DocumentProperty
+    dbo.ContentProperty
 where
-    DocumentId = @Id
+    ContentId = @Id
 ")
-                .AddParameterValue(Columns.Id, documentId);
+                .AddParameterValue(Columns.Id, contentId);
         }
 
-        public IQuery SaveProperty(Guid documentId, string name, string value)
+        public IQuery SaveProperty(Guid contentId, string name, string value)
         {
             Guard.AgainstNullOrEmptyString(name, nameof(name));
 
             return RawQuery.Create(@"
-insert into dbo.DocumentProperty
+insert into dbo.ContentProperty
     (
-        DocumentId,
+        ContentId,
         Name,
         Value
     )
 values
     (
-        @DocumentId,
+        @ContentId,
         @Name,
         @Value
     )
 ")
-                .AddParameterValue(Columns.DocumentId, documentId)
+                .AddParameterValue(Columns.ContentId, contentId)
                 .AddParameterValue(Columns.Name, name)
                 .AddParameterValue(Columns.Value, value);
         }
@@ -206,18 +206,18 @@ values
         {
             return RawQuery.Create(@"
 select
-    DocumentId,
+    ContentId,
     Name,
     Value
 from
-    dbo.DocumentProperty
+    dbo.ContentProperty
 where
-    DocumentId = @DocumentId
+    ContentId = @ContentId
 ")
-                .AddParameterValue(Columns.DocumentId, id);
+                .AddParameterValue(Columns.ContentId, id);
         }
 
-        public IQuery Search(Query.Document.Specification specification)
+        public IQuery Search(Query.Content.Specification specification)
         {
             Guard.AgainstNull(specification, nameof(specification));
 
@@ -236,7 +236,7 @@ select {(specification.MaximumRows > 0 ? $"top {specification.MaximumRows}" : st
 	Status,
 	StatusDateRegistered
 from
-	Document
+	Content
 where
     1 = 1
 {(specification.HasIds ? $@"
@@ -255,75 +255,75 @@ order by
                 .AddParameterValue(Columns.EffectiveToDate, DateTime.MaxValue);
         }
 
-        public IQuery GetStatusEvents(IEnumerable<Guid> documentIds)
+        public IQuery GetStatusEvents(IEnumerable<Guid> contentIds)
         {
-            Guard.AgainstNull(documentIds, nameof(documentIds));
+            Guard.AgainstNull(contentIds, nameof(contentIds));
 
-            var ids = string.Join(",", documentIds.Select(id => $"'{id}'"));
+            var ids = string.Join(",", contentIds.Select(id => $"'{id}'"));
 
             if (string.IsNullOrEmpty(ids))
             {
-                throw new ArgumentException($"Argument '{nameof(documentIds)}' may not be empty.");
+                throw new ArgumentException($"Argument '{nameof(contentIds)}' may not be empty.");
             }
 
             return RawQuery.Create($@"
 select
-	DocumentId,
+	ContentId,
 	SequenceNumber,
 	Status,
 	DateRegistered
 from
-	DocumentStatusEvent
+	ContentStatusEvent
 where
-	DocumentId in ({ids})
+	ContentId in ({ids})
 order by
-    DocumentId,
+    ContentId,
     SequenceNumber
 ");
         }
 
-        public IQuery GetProperties(IEnumerable<Guid> documentIds)
+        public IQuery GetProperties(IEnumerable<Guid> contentIds)
         {
-            Guard.AgainstNull(documentIds, nameof(documentIds));
+            Guard.AgainstNull(contentIds, nameof(contentIds));
 
-            var ids = string.Join(",", documentIds.Select(id => $"'{id}'"));
+            var ids = string.Join(",", contentIds.Select(id => $"'{id}'"));
 
             if (string.IsNullOrEmpty(ids))
             {
-                throw new ArgumentException($"Argument '{nameof(documentIds)}' may not be empty.");
+                throw new ArgumentException($"Argument '{nameof(contentIds)}' may not be empty.");
             }
 
             return RawQuery.Create($@"
 select
-	DocumentId,
+	ContentId,
 	Name,
 	Value
 from
-	DocumentProperty
+	ContentProperty
 where
-	DocumentId in ({ids})
+	ContentId in ({ids})
 order by
     Name
 ");
         }
 
-        public IQuery FindContent(Guid id)
+        public IQuery FindRawContent(Guid id)
         {
             return RawQuery.Create(@"
 select
 	[Status],
 	case
-		when [Status] = 'Cleared' then
-			Content
+		when [Status] = 'Passed' then
+			Bytes
 		when [Status] = 'Suspicious' then
-			SanitizedContent
+			SanitizedBytes
 		else
 			null
-	end Content,
+	end Bytes,
     ContentType,
     FileName
 from
-	[dbo].[Document]
+	[dbo].[Content]
 where
     Id = @Id
 or

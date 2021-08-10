@@ -6,25 +6,25 @@ using Shuttle.Esb;
 
 namespace Shuttle.ContentStore.Server.Handlers
 {
-    public class PollDocumentHandler : IMessageHandler<PollDocumentCommand>
+    public class PollContentHandler : IMessageHandler<PollContentCommand>
     {
         private readonly IDatabaseContextFactory _databaseContextFactory;
-        private readonly IDocumentRepository _documentRepository;
+        private readonly IContentRepository _contentRepository;
         private readonly IMalwareService _malwareService;
 
-        public PollDocumentHandler(IMalwareService malwareService,
-            IDatabaseContextFactory databaseContextFactory, IDocumentRepository documentRepository)
+        public PollContentHandler(IMalwareService malwareService,
+            IDatabaseContextFactory databaseContextFactory, IContentRepository contentRepository)
         {
             Guard.AgainstNull(malwareService, nameof(malwareService));
             Guard.AgainstNull(databaseContextFactory, nameof(databaseContextFactory));
-            Guard.AgainstNull(documentRepository, nameof(documentRepository));
+            Guard.AgainstNull(contentRepository, nameof(contentRepository));
 
             _malwareService = malwareService;
             _databaseContextFactory = databaseContextFactory;
-            _documentRepository = documentRepository;
+            _contentRepository = contentRepository;
         }
 
-        public void ProcessMessage(IHandlerContext<PollDocumentCommand> context)
+        public void ProcessMessage(IHandlerContext<PollContentCommand> context)
         {
             Guard.AgainstNull(context, nameof(context));
 
@@ -34,23 +34,23 @@ namespace Shuttle.ContentStore.Server.Handlers
 
             using (_databaseContextFactory.Create())
             {
-                var document = _documentRepository.Get(context.Message.Id);
+                var content = _contentRepository.Get(context.Message.Id);
 
-                var status = _malwareService.Poll(document);
+                var status = _malwareService.Poll(content);
 
                 switch (status)
                 {
-                    case ServiceStatus.Cleared:
+                    case ServiceStatus.Passed:
                     {
-                        document.Cleared();
+                        content.Passed();
 
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        eventMessage = new DocumentProcessedEvent
+                        eventMessage = new ContentProcessedEvent
                         {
-                            Id = document.Id,
-                            ReferenceId = document.ReferenceId,
-                            SystemName = document.SystemName,
+                            Id = content.Id,
+                            ReferenceId = content.ReferenceId,
+                            SystemName = content.SystemName,
                             Suspicious = false
                         };
 
@@ -58,15 +58,15 @@ namespace Shuttle.ContentStore.Server.Handlers
                     }
                     case ServiceStatus.Suspicious:
                     {
-                        document.Suspicious();
+                        content.Suspicious();
 
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        eventMessage = new DocumentProcessedEvent
+                        eventMessage = new ContentProcessedEvent
                         {
-                            Id = document.Id,
-                            ReferenceId = document.ReferenceId,
-                            SystemName = document.SystemName,
+                            Id = content.Id,
+                            ReferenceId = content.ReferenceId,
+                            SystemName = content.SystemName,
                             Suspicious = true
                         };
 
@@ -79,18 +79,18 @@ namespace Shuttle.ContentStore.Server.Handlers
                     case ServiceStatus.Processing:
                     case ServiceStatus.Registered:
                     {
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        commandMessage = new PollDocumentCommand
+                        commandMessage = new PollContentCommand
                         {
-                            Id = document.Id
+                            Id = content.Id
                         };
 
                         pollIntervalTimeSpan = TimeSpan.FromSeconds(5);
 
-                        if (document.ContainsProperty("PollIntervalTimeSpan"))
+                        if (content.ContainsProperty("PollIntervalTimeSpan"))
                         {
-                            TimeSpan.TryParse(document.GetPropertyValue("PollIntervalTimeSpan"),
+                            TimeSpan.TryParse(content.GetPropertyValue("PollIntervalTimeSpan"),
                                 out pollIntervalTimeSpan);
                         }
 

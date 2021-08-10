@@ -5,21 +5,21 @@ using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore.Application
 {
-    public class DocumentService : IDocumentService
+    public class ContentService : IContentService
     {
         private readonly string _endpoint;
         private readonly IRestClient _client;
 
-        public DocumentService(IDocumentServiceConfiguration configuration)
+        public ContentService(IContentServiceConfiguration configuration)
         {
             Guard.AgainstNull(configuration, nameof(configuration));
 
-            _endpoint = configuration.EndpointUrl;
+            _endpoint = configuration.ApiUrl;
 
-            _client = new RestClient(configuration.EndpointUrl);
+            _client = new RestClient(configuration.ApiUrl);
         }
 
-        public Guid Register(Guid referenceId, string fileName, string contentType, byte[] content,
+        public Guid Register(Guid referenceId, string fileName, string contentType, byte[] bytes,
             string systemName, string username, DateTime effectiveFromDate)
         {
             var request = new RestRequest(_endpoint)
@@ -28,7 +28,7 @@ namespace Shuttle.ContentStore.Application
                 RequestFormat = DataFormat.Json
             };
 
-            request.AddFile("document", content, fileName, contentType);
+            request.AddFile("content", bytes, fileName, contentType);
             request.AddHeader("Content-Type", "multipart/form-data");
 
             request.AddParameter("id", referenceId, ParameterType.GetOrPost);
@@ -46,14 +46,14 @@ namespace Shuttle.ContentStore.Application
 
             var result = JsonConvert.DeserializeObject<dynamic>(response.Content);
 
-            var documentIdValue = result.documentId.ToString();
+            var contentIdValue = result.contentId.ToString();
 
-            if (!Guid.TryParse(documentIdValue, out Guid documentId))
+            if (!Guid.TryParse(contentIdValue, out Guid contentId))
             {
-                throw new ApplicationException($"Could not determine a valid 'documentId' result from the web-api response.  Value received was '{documentIdValue}'.");
+                throw new ApplicationException($"Could not determine a valid 'contentId' result from the web-api response.  Value received was '{contentIdValue}'.");
             }
 
-            return documentId;
+            return contentId;
         }
     }
 }

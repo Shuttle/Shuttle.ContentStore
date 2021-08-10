@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Shuttle.ContentStore.DataAccess.Query
 {
-    public class Document
+    public class Content
     {
         public Guid Id { get; set; }
         public Guid ReferenceId { get; set; }

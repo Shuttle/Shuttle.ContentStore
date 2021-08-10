@@ -4,7 +4,7 @@
     {
         Registered = 1,
         Processing = 2,
-        Cleared = 3,
+        Passed = 3,
         Suspicious = 4
     }
 }

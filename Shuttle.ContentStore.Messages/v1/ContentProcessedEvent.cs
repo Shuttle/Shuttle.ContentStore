@@ -2,7 +2,7 @@
 
 namespace Shuttle.ContentStore.Messages.v1
 {
-    public class DocumentProcessedEvent
+    public class ContentProcessedEvent
     {
         public Guid Id { get; set; }
         public Guid ReferenceId { get; set; }

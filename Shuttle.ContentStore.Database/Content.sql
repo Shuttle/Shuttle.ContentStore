@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[Document]
+﻿CREATE TABLE [dbo].[Content]
 (
 	[Id] UNIQUEIDENTIFIER NOT NULL PRIMARY KEY NONCLUSTERED, 
 	[ReferenceId] UNIQUEIDENTIFIER NOT NULL, 
@@ -10,10 +10,10 @@
     [Username] VARCHAR(128) NOT NULL, 
     [Status] VARCHAR(30) NOT NULL, 
     [StatusDateRegistered] DATETIME2 NOT NULL, 
-    [Content] VARBINARY(MAX) NOT NULL, 
-    [SanitizedContent] VARBINARY(MAX) NULL
+    [Bytes] VARBINARY(MAX) NOT NULL, 
+    [SanitizedBytes] VARBINARY(MAX) NULL
 )
 
 GO
 
-CREATE CLUSTERED INDEX [IX_Document_ReferenceId] ON [dbo].[Document] ([ReferenceId], [EffectiveFromDate], [EffectiveToDate])
+CREATE CLUSTERED INDEX [IX_Content_ReferenceId] ON [dbo].[Content] ([ReferenceId], [EffectiveFromDate], [EffectiveToDate])

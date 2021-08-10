@@ -8,51 +8,51 @@ using Shuttle.Esb;
 
 namespace Shuttle.ContentStore.Server.Handlers
 {
-    public class RegisterDocumentHandler : IMessageHandler<RegisterDocumentCommand>
+    public class RegisterContentHandler : IMessageHandler<RegisterContentCommand>
     {
         private static readonly Regex SuspiciousExpression = new Regex(ConfigurationItem<string>.ReadSetting("SuspiciousExpression", "(?!)").GetValue());
 
         private readonly IDatabaseContextFactory _databaseContextFactory;
-        private readonly IDocumentRepository _documentRepository;
+        private readonly IContentRepository _contentRepository;
         private readonly IMalwareService _malwareService;
 
-        public RegisterDocumentHandler(IMalwareService malwareService,
-            IDatabaseContextFactory databaseContextFactory, IDocumentRepository documentRepository)
+        public RegisterContentHandler(IMalwareService malwareService,
+            IDatabaseContextFactory databaseContextFactory, IContentRepository contentRepository)
         {
             Guard.AgainstNull(malwareService, nameof(malwareService));
             Guard.AgainstNull(databaseContextFactory, nameof(databaseContextFactory));
-            Guard.AgainstNull(documentRepository, nameof(documentRepository));
+            Guard.AgainstNull(contentRepository, nameof(contentRepository));
 
             _malwareService = malwareService;
             _databaseContextFactory = databaseContextFactory;
-            _documentRepository = documentRepository;
+            _contentRepository = contentRepository;
         }
 
-        public void ProcessMessage(IHandlerContext<RegisterDocumentCommand> context)
+        public void ProcessMessage(IHandlerContext<RegisterContentCommand> context)
         {
             Guard.AgainstNull(context, nameof(context));
 
             using (_databaseContextFactory.Create())
             {
-                var document = _documentRepository.Get(context.Message.Id);
+                var content = _contentRepository.Get(context.Message.Id);
 
-                var status = !SuspiciousExpression.IsMatch(document.FileName) 
-                    ? _malwareService.Register(document) 
+                var status = !SuspiciousExpression.IsMatch(content.FileName) 
+                    ? _malwareService.Register(content) 
                     : ServiceStatus.Suspicious;
 
                 switch (status)
                 {
-                    case ServiceStatus.Cleared:
+                    case ServiceStatus.Passed:
                     {
-                        document.Cleared();
+                        content.Passed();
 
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        context.Publish(new DocumentProcessedEvent
+                        context.Publish(new ContentProcessedEvent
                         {
-                            Id = document.Id,
-                            ReferenceId = document.ReferenceId,
-                            SystemName = document.SystemName,
+                            Id = content.Id,
+                            ReferenceId = content.ReferenceId,
+                            SystemName = content.SystemName,
                             Suspicious = false
                         });
 
@@ -60,15 +60,15 @@ namespace Shuttle.ContentStore.Server.Handlers
                     }
                     case ServiceStatus.Suspicious:
                     {
-                        document.Suspicious();
+                        content.Suspicious();
 
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        context.Publish(new DocumentProcessedEvent
+                        context.Publish(new ContentProcessedEvent
                         {
-                            Id = document.Id,
-                            ReferenceId = document.ReferenceId,
-                            SystemName = document.SystemName,
+                            Id = content.Id,
+                            ReferenceId = content.ReferenceId,
+                            SystemName = content.SystemName,
                             Suspicious = true
                         });
 
@@ -77,11 +77,11 @@ namespace Shuttle.ContentStore.Server.Handlers
                     case ServiceStatus.Registered:
                     case ServiceStatus.Processing:
                     {
-                        _documentRepository.Save(document);
+                        _contentRepository.Save(content);
 
-                        context.Send(new PollDocumentCommand
+                        context.Send(new PollContentCommand
                         {
-                            Id = document.Id
+                            Id = content.Id
                         }, c => c.Defer(DateTime.Now.AddSeconds(5)).Local());
 
                         break;

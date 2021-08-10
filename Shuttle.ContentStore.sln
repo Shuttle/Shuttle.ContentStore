@@ -23,19 +23,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shuttle.ContentStore.Opswat
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shuttle.ContentStore.Tests.Integration", "Shuttle.ContentStore.Tests.Integration\Shuttle.ContentStore.Tests.Integration.csproj", "{81154CB3-148B-4F83-817A-86D96A78DFCB}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".azure", ".azure", "{8B744B75-DD14-4842-BE99-2B93542B38F4}"
-	ProjectSection(SolutionItems) = preProject
-		.azure\application-build-pipeline.yml = .azure\application-build-pipeline.yml
-		.azure\build-pipeline.yml = .azure\build-pipeline.yml
-		.azure\documentstore-build-pipeline.yml = .azure\documentstore-build-pipeline.yml
-		.azure\mcafee-build-pipeline.yml = .azure\mcafee-build-pipeline.yml
-		.azure\messages-build-pipeline.yml = .azure\messages-build-pipeline.yml
-		.azure\opswat-build-pipeline.yml = .azure\opswat-build-pipeline.yml
-		.azure\Shuttle.ContentStore.Server.exe.config = .azure\Shuttle.ContentStore.Server.exe.config
-		.azure\Shuttle.ContentStore.WebApi.dll.config = .azure\Shuttle.ContentStore.WebApi.dll.config
-		.azure\Shuttle.ContentStore.WebApi.log4net.xml = .azure\Shuttle.ContentStore.WebApi.log4net.xml
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D20739B2-C123-44AB-A73F-C47A1FD89314}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shuttle.ContentStore.McAfee", "Shuttle.ContentStore.McAfee\Shuttle.ContentStore.McAfee.csproj", "{BA45D77C-94A1-4E9F-A930-DE144F0FF9D7}"

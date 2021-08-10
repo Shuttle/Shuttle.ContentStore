@@ -2,9 +2,9 @@
 
 namespace Shuttle.ContentStore.Application
 {
-    public interface IDocumentService
+    public interface IContentService
     {
-        Guid Register(Guid referenceId, string fileName, string contentType, byte[] content,
+        Guid Register(Guid referenceId, string fileName, string contentType, byte[] bytes,
             string systemName, string username, DateTime effectiveFromDate);
     }
 }

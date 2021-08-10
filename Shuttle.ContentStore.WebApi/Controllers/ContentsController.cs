@@ -1,13 +1,11 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Shuttle.ContentStore.DataAccess;
 using Shuttle.ContentStore.DataAccess.Query;
 using Shuttle.ContentStore.Messages.v1;
 using Shuttle.ContentStore.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Primitives;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Data;
 using Shuttle.Core.Transactions;
@@ -17,28 +15,28 @@ namespace Shuttle.ContentStore.WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DocumentsController : ControllerBase
+    public class ContentsController : ControllerBase
     {
         private readonly IDatabaseContextFactory _databaseContextFactory;
-        private readonly IDocumentRepository _documentRepository;
-        private readonly IDocumentQuery _documentQuery;
+        private readonly IContentRepository _contentRepository;
+        private readonly IContentQuery _contentQuery;
         private readonly IServiceBus _serviceBus;
         private readonly ITransactionScopeFactory _transactionScopeFactory;
 
-        public DocumentsController(IServiceBus serviceBus, ITransactionScopeFactory transactionScopeFactory,
-            IDatabaseContextFactory databaseContextFactory, IDocumentRepository documentRepository, IDocumentQuery documentQuery)
+        public ContentsController(IServiceBus serviceBus, ITransactionScopeFactory transactionScopeFactory,
+            IDatabaseContextFactory databaseContextFactory, IContentRepository contentRepository, IContentQuery contentQuery)
         {
             Guard.AgainstNull(serviceBus, nameof(serviceBus));
             Guard.AgainstNull(transactionScopeFactory, nameof(transactionScopeFactory));
             Guard.AgainstNull(databaseContextFactory, nameof(databaseContextFactory));
-            Guard.AgainstNull(documentRepository, nameof(documentRepository));
-            Guard.AgainstNull(documentQuery, nameof(documentQuery));
+            Guard.AgainstNull(contentRepository, nameof(contentRepository));
+            Guard.AgainstNull(contentQuery, nameof(contentQuery));
 
             _serviceBus = serviceBus;
             _transactionScopeFactory = transactionScopeFactory;
             _databaseContextFactory = databaseContextFactory;
-            _documentRepository = documentRepository;
-            _documentQuery = documentQuery;
+            _contentRepository = contentRepository;
+            _contentQuery = contentQuery;
         }
 
         [HttpGet]
@@ -48,7 +46,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
             {
                 return Ok(new
                 {
-                    Data = _documentQuery.Search(new DataAccess.Query.Document.Specification()
+                    Data = _contentQuery.Search(new DataAccess.Query.Content.Specification()
                         .IncludeProperties()
                         .IncludeStatusEvents()
                         .GetMaximumRows(30))
@@ -63,7 +61,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
             {
                 return Ok(new
                 {
-                    Data = _documentQuery.Search(new DataAccess.Query.Document.Specification()
+                    Data = _contentQuery.Search(new DataAccess.Query.Content.Specification()
                         .AddId(id)
                         .GetActiveOnly()
                         .IncludeProperties()
@@ -73,7 +71,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromForm] RegisterDocumentModel model)
+        public IActionResult Post([FromForm] RegisterContentModel model)
         {
             Guard.AgainstNull(model, nameof(model));
 
@@ -93,25 +91,25 @@ namespace Shuttle.ContentStore.WebApi.Controllers
             using (_databaseContextFactory.Create())
             using (var stream = new MemoryStream())
             {
-                var result = _documentQuery.Search(new DataAccess.Query.Document.Specification().AddId(model.Id).GetActiveOnly()).ToList();
+                var result = _contentQuery.Search(new DataAccess.Query.Content.Specification().AddId(model.Id).GetActiveOnly()).ToList();
 
                 if (result.Any())
                 {
-                    var document = result.First();
+                    var content = result.First();
 
-                    if (model.EffectiveFromDate <= document.EffectiveFromDate)
+                    if (model.EffectiveFromDate <= content.EffectiveFromDate)
                     {
                         return BadRequest(
-                            $"Existing active document (id = '{document.Id}' / reference id = '{document.ReferenceId}') is effective from date '{document.EffectiveFromDate:O}' and the document being registered for the same reference id is effective from date '{model.EffectiveFromDate:O}' which on or after the new one.  The new document should be effective from a date after the existing document.");
+                            $"Existing active content (id = '{content.Id}' / reference id = '{content.ReferenceId}') is effective from date '{content.EffectiveFromDate:O}' and the content being registered for the same reference id is effective from date '{model.EffectiveFromDate:O}' which on or after the new one.  The new content should be effective from a date after the existing content.");
                     }
                 }
 
-                model.Document.CopyTo(stream);
+                model.FormFile.CopyTo(stream);
 
-                _documentRepository.Save(new Document(id, model.Id, model.Document.FileName, model.ContentType,
+                _contentRepository.Save(new Content(id, model.Id, model.FormFile.FileName, model.ContentType,
                     stream.ToArray(), model.SystemName, model.Username, effectiveFromDate));
 
-                _serviceBus.Send(new RegisterDocumentCommand
+                _serviceBus.Send(new RegisterContentCommand
                 {
                     Id = id
                 });
@@ -121,7 +119,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
 
             return Ok(new
             {
-                DocumentId = id,
+                ContentId = id,
                 EffectiveFromDate = $"{effectiveFromDate:O}"
             });
         }
@@ -131,30 +129,30 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         {
             using (_databaseContextFactory.Create())
             {
-                var documentContent = _documentQuery.FindContent(id);
+                var rawContent = _contentQuery.FindRawContent(id);
 
-                if (documentContent == null)
+                if (rawContent == null)
                 {
-                    return BadRequest($"Could not find a document with id '{id}'.");
+                    return BadRequest($"Could not find a content with id '{id}'.");
                 }
 
-                if (documentContent.Content == null)
+                if (rawContent.Bytes == null)
                 {
-                    return BadRequest($"The content for document with id '{id}' is not yet available.");
+                    return BadRequest($"The bytes for content with id '{id}' is not yet available.");
                 }
 
-                Response.Headers.Add("sanitized-content", HasBeenSanitized(documentContent));
+                Response.Headers.Add("sanitized-content", HasBeenSanitized(rawContent));
 
                 return Ok(new
                 {
-                    Data = documentContent.Content
+                    Data = rawContent.Bytes
                 });
             }
         }
 
-        private string HasBeenSanitized(DocumentContent documentContent)
+        private string HasBeenSanitized(RawContent rawContent)
         {
-            return (documentContent.Status.Equals("Suspicious") && documentContent.Content != null).ToString().ToLower();
+            return (rawContent.Status.Equals("Suspicious") && rawContent.Bytes != null).ToString().ToLower();
         }
 
         [HttpGet("{id}/file")]
@@ -162,21 +160,21 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         {
             using (_databaseContextFactory.Create())
             {
-                var documentContent = _documentQuery.FindContent(id);
+                var rawContent = _contentQuery.FindRawContent(id);
 
-                if (documentContent == null)
+                if (rawContent == null)
                 {
-                    return BadRequest($"Could not find a document with id '{id}'.");
+                    return BadRequest($"Could not find a content with id '{id}'.");
                 }
 
-                if (documentContent.Content == null)
+                if (rawContent.Bytes == null)
                 {
-                    return BadRequest($"The content for document with id '{id}' is not yet available.");
+                    return BadRequest($"The bytes for content with id '{id}' is not yet available.");
                 }
 
-                Response.Headers.Add("sanitized-content", HasBeenSanitized(documentContent));
+                Response.Headers.Add("sanitized-content", HasBeenSanitized(rawContent));
 
-                return File(documentContent.Content, documentContent.ContentType, documentContent.FileName);
+                return File(rawContent.Bytes, rawContent.ContentType, rawContent.FileName);
             }
         }
     }

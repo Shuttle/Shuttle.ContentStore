@@ -4,12 +4,12 @@ using Shuttle.Core.Data;
 
 namespace Shuttle.ContentStore.DataAccess
 {
-    public class DocumentRepository : IDocumentRepository
+    public class ContentRepository : IContentRepository
     {
         private readonly IDatabaseGateway _databaseGateway;
-        private readonly IDocumentQueryFactory _queryFactory;
+        private readonly IContentQueryFactory _queryFactory;
 
-        public DocumentRepository(IDatabaseGateway databaseGateway, IDocumentQueryFactory queryFactory)
+        public ContentRepository(IDatabaseGateway databaseGateway, IContentQueryFactory queryFactory)
         {
             Guard.AgainstNull(databaseGateway, nameof(databaseGateway));
             Guard.AgainstNull(queryFactory, nameof(queryFactory));
@@ -18,59 +18,59 @@ namespace Shuttle.ContentStore.DataAccess
             _queryFactory = queryFactory;
         }
 
-        public void Save(Document document)
+        public void Save(Content content)
         {
-            Guard.AgainstNull(document, nameof(document));
+            Guard.AgainstNull(content, nameof(content));
 
-            _databaseGateway.ExecuteUsing(_queryFactory.Save(document));
+            _databaseGateway.ExecuteUsing(_queryFactory.Save(content));
 
-            SaveStatusEvents(document);
-            SaveProperties(document);
+            SaveStatusEvents(content);
+            SaveProperties(content);
         }
 
-        public void SaveProperties(Document document)
+        public void SaveProperties(Content content)
         {
-            Guard.AgainstNull(document, nameof(document));
+            Guard.AgainstNull(content, nameof(content));
 
-            _databaseGateway.ExecuteUsing(_queryFactory.RemoveProperties(document.Id));
+            _databaseGateway.ExecuteUsing(_queryFactory.RemoveProperties(content.Id));
 
-            foreach (var pair in document.GetProperties())
+            foreach (var pair in content.GetProperties())
             {
-                _databaseGateway.ExecuteUsing(_queryFactory.SaveProperty(document.Id, pair.Key, pair.Value));
+                _databaseGateway.ExecuteUsing(_queryFactory.SaveProperty(content.Id, pair.Key, pair.Value));
             }
         }
 
-        private void SaveStatusEvents(Document document)
+        private void SaveStatusEvents(Content content)
         {
-            _databaseGateway.ExecuteUsing(_queryFactory.RemoveStatusEvents(document.Id));
+            _databaseGateway.ExecuteUsing(_queryFactory.RemoveStatusEvents(content.Id));
 
             var sequenceNumber = 1;
 
-            foreach (var statusEvent in document.GetStatusEvents())
+            foreach (var statusEvent in content.GetStatusEvents())
             {
-                _databaseGateway.ExecuteUsing(_queryFactory.SaveStatusEvent(document.Id, sequenceNumber++,
+                _databaseGateway.ExecuteUsing(_queryFactory.SaveStatusEvent(content.Id, sequenceNumber++,
                     statusEvent));
             }
         }
 
-        public Document Get(Guid id)
+        public Content Get(Guid id)
         {
             var row = _databaseGateway.GetSingleRowUsing(_queryFactory.Get(id));
 
-            row.GuardAgainstRecordNotFound<Document>(id);
+            row.GuardAgainstRecordNotFound<Content>(id);
 
-            var result = new Document(
+            var result = new Content(
                 Columns.Id.MapFrom(row), 
                 Columns.ReferenceId.MapFrom(row),
                 Columns.FileName.MapFrom(row),
                 Columns.ContentType.MapFrom(row),
-                Columns.Content.MapFrom(row),
+                Columns.Bytes.MapFrom(row),
                 Columns.SystemName.MapFrom(row),
                 Columns.Username.MapFrom(row),
                 Columns.EffectiveFromDate.MapFrom(row)
             );
 
-            var sanitizedContent = Columns.SanitizedContent.MapFrom(row);
+            var sanitizedContent = Columns.SanitizedBytes.MapFrom(row);
 
             if (sanitizedContent != null && sanitizedContent.Length > 0)
             {

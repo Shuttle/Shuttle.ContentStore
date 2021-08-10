@@ -1,35 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting;
 using Ninject;
 using Shuttle.Core.Container;
 using Shuttle.Core.Data;
 using Shuttle.Core.Data.Http;
+using Shuttle.Core.Logging;
 using Shuttle.Core.Ninject;
+using Shuttle.Core.Reflection;
 using Shuttle.Esb;
 
 namespace Shuttle.ContentStore.WebApi
 {
     public class Startup
     {
+        private readonly ILog _log;
         private IServiceBus _bus;
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            _log = Log.For(this);
         }
 
         public IConfiguration Configuration { get; }
@@ -53,12 +54,11 @@ namespace Shuttle.ContentStore.WebApi
             services.AddSingleton<IDbCommandFactory, DbCommandFactory>();
             services.AddSingleton<IQueryMapper, QueryMapper>();
 
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-            services.AddCors();
+            services.AddControllers();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env,
-            IApplicationLifetime applicationLifetime)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
+            IHostApplicationLifetime applicationLifetime)
         {
             var container = app.ApplicationServices.GetService<IKernel>();
 
@@ -81,7 +81,7 @@ namespace Shuttle.ContentStore.WebApi
 
             var databaseContextFactory = componentContainer.Resolve<IDatabaseContextFactory>();
 
-            databaseContextFactory.ConfigureWith("DocumentStore");
+            databaseContextFactory.ConfigureWith("ContentStore");
 
             _bus = ServiceBus.Create(componentContainer).Start();
 
@@ -91,17 +91,36 @@ namespace Shuttle.ContentStore.WebApi
             {
                 app.UseDeveloperExceptionPage();
             }
-            else
+
+            app.UseExceptionHandler(error =>
             {
-                app.UseHsts();
-            }
+                error.Run(async context =>
+                {
+                    var feature = context.Features.Get<IExceptionHandlerFeature>();
+
+                    if (feature != null)
+                    {
+                        _log.Error(feature.Error.AllMessages());
+                    }
+
+                    await Task.CompletedTask;
+                });
+            });
+
+            app.UseForwardedHeaders(new ForwardedHeadersOptions
+            {
+                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+            });
 
             app.UseCors(
                 options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
             );
 
-            app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => { endpoints.MapControllers(); });
         }
     }
 }
