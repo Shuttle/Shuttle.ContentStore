@@ -5,7 +5,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
 {
     public class ServerController : Controller
     {
-        [HttpGet("api/server/configuration")]
+        [HttpGet("server/configuration")]
         public IActionResult GetServerConfiguration()
         {
             var version = Assembly.GetExecutingAssembly().GetName().Version;

@@ -8,8 +8,8 @@ namespace Shuttle.ContentStore.Opswat
         [ConfigurationProperty("apiKey", IsRequired = true)]
         public string ApiKey => (string)this["apiKey"];
 
-        [ConfigurationProperty("apiUrl", IsRequired = true)]
-        public string ApiUrl => (string)this["apiUrl"];
+        [ConfigurationProperty("url", IsRequired = true)]
+        public string Url => (string)this["url"];
 
         [ConfigurationProperty("sandboxFileExtensions", IsRequired = false)]
         public string SandboxFileExtensions => (string)this["sandboxFileExtensions"];
@@ -27,7 +27,7 @@ namespace Shuttle.ContentStore.Opswat
                 throw new ConfigurationErrorsException("Could not find an 'opswat' configuration section.");
             }
 
-            var result = new OpswatConfiguration(section.ApiUrl, section.ApiKey, section.SandboxFileExtensions);
+            var result = new OpswatConfiguration(section.Url, section.ApiKey, section.SandboxFileExtensions);
 
             if (section.SampleSharingAllowed)
             {

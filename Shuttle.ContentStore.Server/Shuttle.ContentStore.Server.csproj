@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <PackageReference Include="Shuttle.ContentStore" Version="1.0.0" />
-    <PackageReference Include="Shuttle.ContentStore.McAfee" Version="1.0.0" />
     <PackageReference Include="Shuttle.ContentStore.Messages" Version="1.0.0" />
     <PackageReference Include="Shuttle.Core.Contract" Version="10.0.3" />
     <PackageReference Include="Shuttle.Core.Data" Version="11.0.4" />

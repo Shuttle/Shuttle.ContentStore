@@ -17,7 +17,7 @@ namespace Shuttle.ContentStore.Tests.Integration.Opswat
 
             Assert.That(section, Is.Not.Null);
             Assert.That(section.ApiKey, Is.EqualTo("api-key"));
-            Assert.That(section.ApiUrl, Is.EqualTo("api-url"));
+            Assert.That(section.Url, Is.EqualTo("api-url"));
         }
 
 	}

@@ -13,7 +13,7 @@ using Shuttle.Esb;
 
 namespace Shuttle.ContentStore.WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class ContentsController : ControllerBase
     {

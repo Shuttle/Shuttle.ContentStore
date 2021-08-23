@@ -7,7 +7,7 @@
     </layout>
   </appender>
   <appender name="RollingFileAppender" type="log4net.Appender.RollingFileAppender">
-    <file value="logs\documentstore-webapi" />
+    <file value="logs\contentstore-webapi" />
     <appendToFile value="true" />
     <rollingStyle value="Date" />
     <maxSizeRollBackups value="10" />

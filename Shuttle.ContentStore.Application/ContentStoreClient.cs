@@ -6,18 +6,18 @@ using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore.Application
 {
-    public class ContentService : IContentService
+    public class ContentStoreClient : IContentStoreClient
     {
         private readonly string _endpoint;
         private readonly IRestClient _client;
 
-        public ContentService(IContentServiceConfiguration configuration)
+        public ContentStoreClient(IContentStoreClientConfiguration configuration)
         {
             Guard.AgainstNull(configuration, nameof(configuration));
 
-            _endpoint = configuration.ApiUrl;
+            _endpoint = configuration.GetEndpoint("/contents");
 
-            _client = new RestClient(configuration.ApiUrl);
+            _client = new RestClient(configuration.Url);
 
             _client.UseNewtonsoftJson();
         }
@@ -31,7 +31,7 @@ namespace Shuttle.ContentStore.Application
                 RequestFormat = DataFormat.Json
             };
 
-            request.AddFile("content", bytes, fileName, contentType);
+            request.AddFile("formFile", bytes, fileName, contentType);
             request.AddHeader("Content-Type", "multipart/form-data");
 
             request.AddParameter("id", referenceId, ParameterType.GetOrPost);

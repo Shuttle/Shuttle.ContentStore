@@ -1,5 +1,7 @@
-﻿using System.Net;
-using Shuttle.ContentStore.McAfee;
+﻿using System.Data.Common;
+using System.Data.SqlClient;
+using System.Net;
+using System.Text;
 using log4net;
 using Ninject;
 using Shuttle.Core.Configuration;
@@ -30,6 +32,10 @@ namespace Shuttle.ContentStore.Server
 
         public void Start()
         {
+            DbProviderFactories.RegisterFactory("System.Data.SqlClient", SqlClientFactory.Instance);
+
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             Log.Assign(new Log4NetLog(LogManager.GetLogger(typeof(Host))));
 
             if (ConfigurationItem<bool>.ReadSetting("SkipCertificateValidation", true).GetValue())
@@ -42,7 +48,7 @@ namespace Shuttle.ContentStore.Server
 
             _container = new NinjectComponentContainer(_kernel);
 
-            _container.Register<IMalwareService, McAfeeMalwareService>();
+            _container.Register<IMalwareService, DefaultMalwareService>();
 
             ServiceBus.Register(_container);
 

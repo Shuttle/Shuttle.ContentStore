@@ -34,7 +34,7 @@ namespace Client
             Console.WriteLine();
 
             var contentService =
-                new ContentService(new ContentServiceConfiguration(string.IsNullOrEmpty(endpointUrl)
+                new ContentStoreClient(new ContentStoreClientConfiguration(string.IsNullOrEmpty(endpointUrl)
                     ? configuredEndpointUrl
                     : endpointUrl));
 

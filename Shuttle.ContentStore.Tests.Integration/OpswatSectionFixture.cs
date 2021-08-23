@@ -18,7 +18,7 @@ namespace Shuttle.ContentStore.Tests.Integration.Opswat
                 Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $".config\\{file}"));
 
             Assert.That(section, Is.Not.Null);
-            Assert.That(section.ApiUrl, Is.EqualTo("api-url"));
+            Assert.That(section.Url, Is.EqualTo("api-url"));
         }
 
 	}
