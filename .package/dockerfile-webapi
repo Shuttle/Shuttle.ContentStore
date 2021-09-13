@@ -1,0 +1,5 @@
+﻿FROM mcr.microsoft.com/dotnet/aspnet:5.0
+
+COPY ./deployment/Shuttle.ContentStore.WebApi/. /opt/shuttle.contentstore.webapi/.
+
+ENTRYPOINT ["/opt/shuttle.contentstore.webapi/Shuttle.ContentStore.WebApi"]

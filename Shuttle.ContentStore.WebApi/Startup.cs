@@ -11,6 +11,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Ninject;
+using Shuttle.Access;
+using Shuttle.Access.DataAccess;
+using Shuttle.Access.Mvc.DataStore;
+using Shuttle.Access.Sql;
 using Shuttle.Core.Container;
 using Shuttle.Core.Data;
 using Shuttle.Core.Data.Http;
@@ -53,6 +57,13 @@ namespace Shuttle.ContentStore.WebApi
             services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>();
             services.AddSingleton<IDbCommandFactory, DbCommandFactory>();
             services.AddSingleton<IQueryMapper, QueryMapper>();
+            services.AddSingleton<IDataRowMapper, DataRowMapper>();
+            services.AddSingleton(typeof(IDataRepository<>), typeof(DataRepository<>));
+            services.AddSingleton<ISessionQueryFactory, SessionQueryFactory>();
+            services.AddSingleton<IDataRowMapper<Session>, SessionMapper>();
+            services.AddSingleton(AccessSection.Configuration());
+            services.AddSingleton<ISessionRepository, SessionRepository>();
+            services.AddSingleton<IAccessService, DataStoreAccessService>();
 
             services.AddControllers();
         }

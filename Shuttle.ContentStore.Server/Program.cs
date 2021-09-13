@@ -20,6 +20,10 @@ namespace Shuttle.ContentStore.Server
     {
         private static void Main(string[] args)
         {
+            DbProviderFactories.RegisterFactory("System.Data.SqlClient", SqlClientFactory.Instance);
+
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
             ServiceHost.Run<Host>();
         }
     }
@@ -32,11 +36,9 @@ namespace Shuttle.ContentStore.Server
 
         public void Start()
         {
-            DbProviderFactories.RegisterFactory("System.Data.SqlClient", SqlClientFactory.Instance);
-
-            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-
             Log.Assign(new Log4NetLog(LogManager.GetLogger(typeof(Host))));
+
+            Log.Information("[starting]");
 
             if (ConfigurationItem<bool>.ReadSetting("SkipCertificateValidation", true).GetValue())
             {
@@ -55,13 +57,19 @@ namespace Shuttle.ContentStore.Server
             _container.Resolve<IDatabaseContextFactory>().ConfigureWith("ContentStore");
 
             _bus = ServiceBus.Create(_container).Start();
+
+            Log.Information("[started]");
         }
 
         public void Stop()
         {
+            Log.Information("[stopping]");
+
             _bus?.Dispose();
             _container?.AttemptDispose();
             _kernel?.Dispose();
+
+            Log.Information("[stopped]");
         }
     }
 }

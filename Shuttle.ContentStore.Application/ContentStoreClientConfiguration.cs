@@ -1,16 +1,17 @@
-﻿using Shuttle.Core.Contract;
+﻿using System;
+using Shuttle.Core.Contract;
 
 namespace Shuttle.ContentStore.Application
 {
     public class ContentStoreClientConfiguration : IContentStoreClientConfiguration
     {
-        public ContentStoreClientConfiguration(string apiUrl)
-        {
-            Guard.AgainstNullOrEmptyString(apiUrl, nameof(apiUrl));
-            
-            Url = apiUrl;
-        }
+        public Uri Url { get; }
 
-        public string Url { get; }
+        public ContentStoreClientConfiguration(string url)
+        {
+            Guard.AgainstNullOrEmptyString(url, nameof(url));
+
+            Url = new Uri($"{url}{(url.EndsWith("/") ? string.Empty : "/")}");
+        }
     }
 }

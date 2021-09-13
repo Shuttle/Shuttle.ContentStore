@@ -1,7 +1,9 @@
-﻿namespace Shuttle.ContentStore.Application
+﻿using System;
+
+namespace Shuttle.ContentStore.Application
 {
     public interface IContentStoreClientConfiguration
     {
-        string Url { get; }
+        Uri Url { get; }
     }
 }

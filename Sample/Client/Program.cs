@@ -80,9 +80,10 @@ namespace Client
 
                     try
                     {
-                        contentService.Register(id, $"{id}-{fileName}", MimeTypesMap.GetMimeType(fileName),
-                            File.ReadAllBytes(path), "content-store://sample",
-                            Environment.UserDomainName + "\\" + Environment.UserName, DateTime.Now);
+                        throw new NotImplementedException("Need to obtain token from command line.");
+                        //contentService.Register(id, $"{id}-{fileName}", MimeTypesMap.GetMimeType(fileName),
+                        //    File.ReadAllBytes(path), "content-store://sample",
+                        //    Environment.UserDomainName + "\\" + Environment.UserName, DateTime.Now);
 
                         Console.WriteLine($"[file registered] : index = {i} / id = {id}");
                     }

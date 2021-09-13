@@ -8,24 +8,24 @@ namespace Shuttle.ContentStore.Application
 {
     public class ContentStoreClient : IContentStoreClient
     {
-        private readonly string _endpoint;
+        private readonly IContentStoreClientConfiguration _configuration;
         private readonly IRestClient _client;
 
         public ContentStoreClient(IContentStoreClientConfiguration configuration)
         {
             Guard.AgainstNull(configuration, nameof(configuration));
 
-            _endpoint = configuration.GetEndpoint("/contents");
+            _configuration = configuration;
 
             _client = new RestClient(configuration.Url);
 
             _client.UseNewtonsoftJson();
         }
 
-        public Guid Register(Guid referenceId, string fileName, string contentType, byte[] bytes,
+        public Guid Register(Guid accessToken, Guid referenceId, string fileName, string contentType, byte[] bytes,
             string systemName, string username, DateTime effectiveFromDate)
         {
-            var request = new RestRequest(_endpoint)
+            var request = new RestRequest(_configuration.GetApiUrl("contents"))
             {
                 Method = Method.POST,
                 RequestFormat = DataFormat.Json

@@ -8,6 +8,12 @@ namespace Shuttle.ContentStore.Application
         [ConfigurationProperty("url", IsRequired = true)]
         public string Url => (string)this["url"];
 
+        [ConfigurationProperty("identityName", IsRequired = true)]
+        public string IdentityName => (string)this["identityName"];
+
+        [ConfigurationProperty("password", IsRequired = true)]
+        public string Password => (string)this["password"];
+
         public static IContentStoreClientConfiguration Configuration()
         {
             var section =

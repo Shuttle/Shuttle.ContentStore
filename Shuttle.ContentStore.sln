@@ -31,6 +31,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Sample\Client\Cli
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Server", "Sample\Server\Server.csproj", "{CDB7EFA5-49F5-44CB-9897-E1385F72BC92}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".package", ".package", "{B3AA5DBB-142A-4904-BA01-3A50CE6105A1}"
+	ProjectSection(SolutionItems) = preProject
+		.package\docker-compose.yml = .package\docker-compose.yml
+		.package\docker.msbuild = .package\docker.msbuild
+		.package\dockerfile-server = .package\dockerfile-server
+		.package\dockerfile-webapi = .package\dockerfile-webapi
+		.package\Shuttle.ContentStore.Server.config = .package\Shuttle.ContentStore.Server.config
+		.package\Shuttle.ContentStore.WebApi.config = .package\Shuttle.ContentStore.WebApi.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

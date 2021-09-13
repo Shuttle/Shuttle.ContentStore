@@ -6,6 +6,7 @@ using Shuttle.ContentStore.DataAccess.Query;
 using Shuttle.ContentStore.Messages.v1;
 using Shuttle.ContentStore.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
+using Shuttle.Access.Mvc;
 using Shuttle.Core.Contract;
 using Shuttle.Core.Data;
 using Shuttle.Core.Transactions;
@@ -40,6 +41,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         }
 
         [HttpGet]
+        [RequiresPermission(Permissions.View.Content)]
         public IActionResult Get()
         {
             using (_databaseContextFactory.Create())
@@ -55,6 +57,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         }
 
         [HttpGet("{id}")]
+        [RequiresPermission(Permissions.View.Content)]
         public IActionResult Get(Guid id)
         {
             using (_databaseContextFactory.Create())
@@ -71,6 +74,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         }
 
         [HttpPost]
+        [RequiresPermission(Permissions.Register.Content)]
         public IActionResult Post([FromForm] RegisterContentModel model)
         {
             Guard.AgainstNull(model, nameof(model));
@@ -124,7 +128,8 @@ namespace Shuttle.ContentStore.WebApi.Controllers
             });
         }
 
-        [HttpGet("{id}/content")]
+        [HttpGet("{id}/bytes")]
+        [RequiresPermission(Permissions.Download.Content)]
         public IActionResult Content(Guid id)
         {
             using (_databaseContextFactory.Create())
@@ -156,6 +161,7 @@ namespace Shuttle.ContentStore.WebApi.Controllers
         }
 
         [HttpGet("{id}/file")]
+        [RequiresPermission(Permissions.Download.Content)]
         public IActionResult Download(Guid id)
         {
             using (_databaseContextFactory.Create())

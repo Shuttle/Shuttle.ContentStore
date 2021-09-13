@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>net50</TargetFramework>
+    <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+    <PackageReference Include="Shuttle.Access.Mvc" Version="4.0.1" />
+    <PackageReference Include="Shuttle.Access.Mvc.DataStore" Version="4.0.0" />
+    <PackageReference Include="Shuttle.Access.Sql" Version="4.0.0" />
     <PackageReference Include="Shuttle.ContentStore" Version="1.0.0" />
     <PackageReference Include="Shuttle.ContentStore.Messages" Version="1.0.0" />
     <PackageReference Include="Ninject" Version="3.3.4" />
