@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.28.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shuttle.ContentStore\Shuttle.ContentStore.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Description>Azure content store implementation.</Description>
+    <Version>1.0.0</Version>
+    <Authors>Eben Roux</Authors>
+    <Company>Shuttle</Company>
+    <Copyright>Copyright (c) 2026, Eben Roux</Copyright>
+    <PackageProjectUrl>https://github.com/Shuttle/Shuttle.ContentStore</PackageProjectUrl>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/Shuttle/Shuttle.ContentStore.git</RepositoryUrl>
+    <PackageTags>content content-store content-engine azure blob blobcontainer</PackageTags>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\.media\logo.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition="'$(NUGET_PACKAGE_FOLDER)' != ''">
+    <Message Text="Removing cached NuGet package '$(USERPROFILE)\.nuget\packages\$(AssemblyName)\$(Version)'..." Importance="high" />
+    <RemoveDir Directories="$(USERPROFILE)\.nuget\packages\$(AssemblyName)\$(Version)" />
+    <Message Text="Copying NuGet package to '$(NUGET_PACKAGE_FOLDER)'..." Importance="high" />
+    <Copy SourceFiles="bin\$(Configuration)\$(AssemblyName).$(Version).nupkg" DestinationFolder="$(NUGET_PACKAGE_FOLDER)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="Shuttle.ContentStore.Azure/Shuttle.ContentStore.Azure.csproj" Id="a6f7702c-9a7f-44a4-b07f-a05696739170" />
+  <Project Path="Shuttle.ContentStore.Tests/Shuttle.ContentStore.Tests.csproj" Id="86bd4dda-89bb-46b5-9f4d-38c0cfb9a65c" />
+  <Project Path="Shuttle.ContentStore/Shuttle.ContentStore.csproj" />
+</Solution>
