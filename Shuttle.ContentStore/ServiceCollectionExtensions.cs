@@ -1,11 +1,10 @@
-﻿using System.Reflection.Metadata.Ecma335;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
 namespace Shuttle.ContentStore;
 
 public static class ServiceCollectionExtensions
 {
-    extension(ServiceCollection services)
+    extension(IServiceCollection services)
     {
         public ContentStoreBuilder AddContentStore()
         {

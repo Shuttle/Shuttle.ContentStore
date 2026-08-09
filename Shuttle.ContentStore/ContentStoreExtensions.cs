@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Shuttle.Contract;
 
 namespace Shuttle.ContentStore;
 
@@ -8,8 +9,9 @@ public static class ContentStoreExtensions
     {
         public async Task SaveAsync(string key, byte[] bytes, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(store);
-            ArgumentNullException.ThrowIfNull(bytes);
+            Guard.AgainstNull(store);
+            Guard.AgainstEmpty(key);
+            Guard.AgainstNull(bytes);
 
             await using var stream = new MemoryStream(bytes, writable: false);
 
@@ -18,7 +20,8 @@ public static class ContentStoreExtensions
 
         public async Task<byte[]> GetBytesAsync(string key, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(store);
+            Guard.AgainstNull(store);
+            Guard.AgainstEmpty(key);
 
             await using var stream = await store.OpenReadAsync(key, cancellationToken);
 
@@ -34,7 +37,8 @@ public static class ContentStoreExtensions
 
         public async Task<string> GetTextAsync(string key, Encoding? encoding = null, CancellationToken cancellationToken = default)
         {
-            ArgumentNullException.ThrowIfNull(store);
+            Guard.AgainstNull(store);
+            Guard.AgainstEmpty(key);
 
             encoding ??= Encoding.UTF8;
 

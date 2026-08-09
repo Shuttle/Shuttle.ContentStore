@@ -19,7 +19,7 @@ public static class ContentStoreBuilderExtensions
 
             services.AddSingleton<IValidateOptions<AzureContentStoreOptions>, AzureContentStoreOptionsValidator>();
 
-            contentStoreBuilder.AddContentStore<AzureContentStore>();
+            contentStoreBuilder.AddContentStore<AzureContentStore>(AzureContentStore.StoreName);
 
             return contentStoreBuilder;
         }

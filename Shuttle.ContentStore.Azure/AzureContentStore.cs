@@ -4,17 +4,22 @@ using Azure.Storage.Blobs.Models;
 using Azure;
 using Azure.Storage;
 using Microsoft.Extensions.Options;
+using Shuttle.Contract;
 
 namespace Shuttle.ContentStore.Azure;
 
 public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentStoreOptions) : IContentStore
 {
+    public const string StoreName = "azure";
+
     private readonly BlobContainerClient _container = BuildContainerClient(azureContentStoreOptions.Value);
 
-    public string Name { get; } = "azure";
+    public string Name { get; } = StoreName;
 
     public async Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken = default)
     {
+        Guard.AgainstEmpty(key);
+
         try
         {
             var response = await _container.GetBlobClient(BlobKey(key)).DownloadStreamingAsync(cancellationToken: cancellationToken);
@@ -26,14 +31,27 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
         }
     }
 
-    public async Task PutAsync(string key, Stream content, CancellationToken cancellationToken = default) =>
+    public async Task PutAsync(string key, Stream content, CancellationToken cancellationToken = default)
+    {
+        Guard.AgainstEmpty(key);
+        Guard.AgainstNull(content);
+
         await _container.GetBlobClient(BlobKey(key)).UploadAsync(content, overwrite: true, cancellationToken);
+    }
 
-    public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default) =>
-        (await _container.GetBlobClient(BlobKey(key)).ExistsAsync(cancellationToken)).Value;
+    public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
+    {
+        Guard.AgainstEmpty(key);
 
-    public async Task DeleteAsync(string key, CancellationToken cancellationToken = default) =>
+        return (await _container.GetBlobClient(BlobKey(key)).ExistsAsync(cancellationToken)).Value;
+    }
+
+    public async Task DeleteAsync(string key, CancellationToken cancellationToken = default)
+    {
+        Guard.AgainstEmpty(key);
+
         await _container.GetBlobClient(BlobKey(key)).DeleteIfExistsAsync(cancellationToken: cancellationToken);
+    }
 
     private string BlobKey(string key) =>
         string.IsNullOrEmpty(azureContentStoreOptions.Value.Prefix) ? key : $"{azureContentStoreOptions.Value.Prefix}/{key}";

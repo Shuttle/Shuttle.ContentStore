@@ -3,14 +3,17 @@ using Shuttle.Contract;
 
 namespace Shuttle.ContentStore;
 
-public class ContentStoreBuilder(ServiceCollection services)
+public class ContentStoreBuilder(IServiceCollection services)
 {
-    public ServiceCollection Services { get; } = services;
+    public IServiceCollection Services { get; } = services;
 
-    private void RemoveContentStore()
+    private void RemoveContentStore(string? key = null)
     {
-        var descriptor = Services.FirstOrDefault(serviceDescriptor => 
-            serviceDescriptor.ServiceType == typeof(IContentStore) && !serviceDescriptor.IsKeyedService);
+        var descriptor = Services.FirstOrDefault(serviceDescriptor =>
+            serviceDescriptor.ServiceType == typeof(IContentStore) &&
+            (key == null
+                ? !serviceDescriptor.IsKeyedService
+                : serviceDescriptor.IsKeyedService && Equals(serviceDescriptor.ServiceKey, key)));
 
         if (descriptor == null)
         {
@@ -20,12 +23,15 @@ public class ContentStoreBuilder(ServiceCollection services)
         Services.Remove(descriptor);
     }
 
-    public ContentStoreBuilder AddContentStore<T>() where T : IContentStore
+    public ContentStoreBuilder AddContentStore<T>(string key) where T : IContentStore
     {
+        Guard.AgainstEmpty(key);
+
         RemoveContentStore();
+        RemoveContentStore(key);
 
         Services.AddSingleton(typeof(IContentStore), typeof(T));
-        Services.AddKeyedSingleton(typeof(IContentStore), "azure", typeof(T));
+        Services.AddKeyedSingleton(typeof(IContentStore), key, typeof(T));
 
         return this;
     }
