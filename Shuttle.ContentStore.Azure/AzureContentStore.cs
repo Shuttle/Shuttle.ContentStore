@@ -13,12 +13,16 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
     public const string StoreName = "azure";
 
     private readonly BlobContainerClient _container = BuildContainerClient(azureContentStoreOptions.Value);
+    private readonly SemaphoreSlim _containerExistsLock = new(1, 1);
+    private bool _containerExists;
 
     public string Name { get; } = StoreName;
 
     public async Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken = default)
     {
         Guard.AgainstEmpty(key);
+
+        await EnsureContainerExistsAsync(cancellationToken);
 
         try
         {
@@ -36,12 +40,16 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
         Guard.AgainstEmpty(key);
         Guard.AgainstNull(content);
 
+        await EnsureContainerExistsAsync(cancellationToken);
+
         await _container.GetBlobClient(BlobKey(key)).UploadAsync(content, overwrite: true, cancellationToken);
     }
 
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
     {
         Guard.AgainstEmpty(key);
+
+        await EnsureContainerExistsAsync(cancellationToken);
 
         return (await _container.GetBlobClient(BlobKey(key)).ExistsAsync(cancellationToken)).Value;
     }
@@ -50,7 +58,35 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
     {
         Guard.AgainstEmpty(key);
 
+        await EnsureContainerExistsAsync(cancellationToken);
+
         await _container.GetBlobClient(BlobKey(key)).DeleteIfExistsAsync(cancellationToken: cancellationToken);
+    }
+
+    private async Task EnsureContainerExistsAsync(CancellationToken cancellationToken)
+    {
+        if (_containerExists)
+        {
+            return;
+        }
+
+        await _containerExistsLock.WaitAsync(cancellationToken);
+
+        try
+        {
+            if (_containerExists)
+            {
+                return;
+            }
+
+            await _container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+
+            _containerExists = true;
+        }
+        finally
+        {
+            _containerExistsLock.Release();
+        }
     }
 
     private string BlobKey(string key) =>

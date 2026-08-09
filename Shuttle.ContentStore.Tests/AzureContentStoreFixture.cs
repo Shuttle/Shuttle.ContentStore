@@ -14,11 +14,9 @@ public class AzureContentStoreFixture
     private BlobContainerClient? _containerClient;
 
     [SetUp]
-    public async Task SetUp()
+    public void SetUp()
     {
         _containerClient = new(ConnectionString, ContainerName);
-        
-        await _containerClient.CreateIfNotExistsAsync();
     }
 
     [TearDown]
@@ -123,6 +121,22 @@ public class AzureContentStoreFixture
         var ex = Assert.ThrowsAsync<FileNotFoundException>(async () => await store.OpenReadAsync(nonExistentKey));
 
         Assert.That(ex!.Message, Does.Contain(nonExistentKey));
+    }
+
+    [Test]
+    public async Task Should_create_container_when_it_does_not_exist_on_first_access()
+    {
+        await _containerClient!.DeleteIfExistsAsync();
+
+        Assert.That((await _containerClient.ExistsAsync()).Value, Is.False);
+
+        var store = CreateContentStore();
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("content"));
+
+        await store.PutAsync("container-creation-test.txt", stream);
+
+        Assert.That((await _containerClient.ExistsAsync()).Value, Is.True);
     }
 
     [Test]
