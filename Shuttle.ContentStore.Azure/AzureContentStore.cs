@@ -94,15 +94,15 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
 
     private static BlobContainerClient BuildContainerClient(AzureContentStoreOptions options)
     {
-        if (!string.IsNullOrWhiteSpace(options.AccountName) && !string.IsNullOrWhiteSpace(options.AccountKey))
+        if (!string.IsNullOrWhiteSpace(options.StorageAccount) && !string.IsNullOrWhiteSpace(options.AccountKey))
         {
-            return new(new($"https://{options.AccountName}.blob.core.windows.net/{options.ContainerName}"), new StorageSharedKeyCredential(options.AccountName, options.AccountKey));
+            return new(new($"https://{options.StorageAccount}.blob.core.windows.net/{options.ContainerName}"), new StorageSharedKeyCredential(options.StorageAccount, options.AccountKey));
         }
 
-        if (!string.IsNullOrWhiteSpace(options.AccountName))
+        if (!string.IsNullOrWhiteSpace(options.StorageAccount))
         {
             return new(
-                new($"https://{options.AccountName}.blob.core.windows.net/{options.ContainerName}"),
+                new($"https://{options.StorageAccount}.blob.core.windows.net/{options.ContainerName}"),
                 new DefaultAzureCredential());
         }
 
@@ -111,6 +111,6 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
             return new(options.ConnectionString, options.ContainerName);
         }
 
-        throw new InvalidOperationException($"Configure either '{nameof(options.AccountName)}' (with optional '{nameof(options.AccountKey)}') or '{nameof(options.ConnectionString)}'.");
+        throw new InvalidOperationException($"Configure either '{nameof(options.StorageAccount)}' (with optional '{nameof(options.AccountKey)}') or '{nameof(options.ConnectionString)}'.");
     }
 }
