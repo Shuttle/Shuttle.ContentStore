@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using Shuttle.Contract;
 
 namespace Shuttle.ContentStore;
@@ -7,42 +7,32 @@ public class ContentStoreBuilder(IServiceCollection services)
 {
     public IServiceCollection Services { get; } = services;
 
-    private void RemoveContentStore(string? key = null)
+    /// <summary>
+    /// Registers a store with the given logical name.  Store names must be unique across all providers.
+    /// </summary>
+    /// <param name="name">The logical name of the store, which is also the keyed service key.</param>
+    /// <param name="factory">Creates the store; receives the service provider and the store name.</param>
+    public ContentStoreBuilder AddContentStore(string name, Func<IServiceProvider, string, IContentStore> factory)
     {
-        var descriptor = Services.FirstOrDefault(serviceDescriptor =>
-            serviceDescriptor.ServiceType == typeof(IContentStore) &&
-            (key == null
-                ? !serviceDescriptor.IsKeyedService
-                : serviceDescriptor.IsKeyedService && Equals(serviceDescriptor.ServiceKey, key)));
+        Guard.AgainstEmpty(name);
+        Guard.AgainstNull(factory);
 
-        if (descriptor == null)
+        if (Services.Any(descriptor => descriptor.ServiceType == typeof(IContentStore) && descriptor.IsKeyedService && Equals(descriptor.ServiceKey, name)))
         {
-            return;
+            throw new InvalidOperationException($"A content store named '{name}' has already been registered.");
         }
 
-        Services.Remove(descriptor);
-    }
-
-    public ContentStoreBuilder AddContentStore<T>(string key) where T : IContentStore
-    {
-        Guard.AgainstEmpty(key);
-
-        RemoveContentStore();
-        RemoveContentStore(key);
-
-        Services.AddSingleton(typeof(IContentStore), typeof(T));
-        Services.AddKeyedSingleton(typeof(IContentStore), key, typeof(T));
+        Services.AddKeyedSingleton<IContentStore>(name, (serviceProvider, key) => factory(serviceProvider, (string)key!));
+        Services.Configure<ContentStoreOptions>(options => options.StoreNames.Add(name));
 
         return this;
     }
 
-    public ContentStoreBuilder SetDefault(string key)
+    public ContentStoreBuilder SetDefault(string name)
     {
-        Guard.AgainstEmpty(key);
+        Guard.AgainstEmpty(name);
 
-        RemoveContentStore();
-
-        Services.AddSingleton<IContentStore>(serviceProvider => serviceProvider.GetRequiredKeyedService<IContentStore>(key));
+        Services.Configure<ContentStoreOptions>(options => options.DefaultStore = name);
 
         return this;
     }

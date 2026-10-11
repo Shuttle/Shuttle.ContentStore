@@ -1,22 +1,17 @@
-﻿using Azure.Identity;
+using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
-using Azure;
-using Azure.Storage;
-using Microsoft.Extensions.Options;
 using Shuttle.Contract;
 
 namespace Shuttle.ContentStore.Azure;
 
-public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentStoreOptions) : IContentStore
+public class AzureContentStore(string name, AzureContentStoreOptions azureContentStoreOptions, BlobContainerClient blobContainerClient) : IContentStore
 {
-    public const string StoreName = "azure";
-
-    private readonly BlobContainerClient _container = BuildContainerClient(azureContentStoreOptions.Value);
     private readonly SemaphoreSlim _containerExistsLock = new(1, 1);
-    private bool _containerExists;
+    private readonly string _prefix = Guard.AgainstNull(azureContentStoreOptions).Prefix.Trim('/');
+    private bool _containerExists = !azureContentStoreOptions.CreateContainerIfNotExists;
 
-    public string Name { get; } = StoreName;
+    public string Name { get; } = Guard.AgainstEmpty(name);
 
     public async Task<Stream> OpenReadAsync(string key, CancellationToken cancellationToken = default)
     {
@@ -26,12 +21,12 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
 
         try
         {
-            var response = await _container.GetBlobClient(BlobKey(key)).DownloadStreamingAsync(cancellationToken: cancellationToken);
+            var response = await GetBlobClient(key).DownloadStreamingAsync(cancellationToken: cancellationToken);
             return response.Value.Content;
         }
         catch (RequestFailedException ex) when (ex.ErrorCode == BlobErrorCode.BlobNotFound)
         {
-            throw new FileNotFoundException($"Content not found for key '{key}'.", key, ex);
+            throw new FileNotFoundException($"Content not found for key '{key}' in store '{Name}'.", key, ex);
         }
     }
 
@@ -42,7 +37,7 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
 
         await EnsureContainerExistsAsync(cancellationToken);
 
-        await _container.GetBlobClient(BlobKey(key)).UploadAsync(content, overwrite: true, cancellationToken);
+        await GetBlobClient(key).UploadAsync(content, overwrite: true, cancellationToken);
     }
 
     public async Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
@@ -51,7 +46,7 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
 
         await EnsureContainerExistsAsync(cancellationToken);
 
-        return (await _container.GetBlobClient(BlobKey(key)).ExistsAsync(cancellationToken)).Value;
+        return (await GetBlobClient(key).ExistsAsync(cancellationToken)).Value;
     }
 
     public async Task DeleteAsync(string key, CancellationToken cancellationToken = default)
@@ -60,7 +55,7 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
 
         await EnsureContainerExistsAsync(cancellationToken);
 
-        await _container.GetBlobClient(BlobKey(key)).DeleteIfExistsAsync(cancellationToken: cancellationToken);
+        await GetBlobClient(key).DeleteIfExistsAsync(cancellationToken: cancellationToken);
     }
 
     private async Task EnsureContainerExistsAsync(CancellationToken cancellationToken)
@@ -79,7 +74,7 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
                 return;
             }
 
-            await _container.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
+            await blobContainerClient.CreateIfNotExistsAsync(cancellationToken: cancellationToken);
 
             _containerExists = true;
         }
@@ -89,28 +84,6 @@ public class AzureContentStore(IOptions<AzureContentStoreOptions> azureContentSt
         }
     }
 
-    private string BlobKey(string key) =>
-        string.IsNullOrEmpty(azureContentStoreOptions.Value.Prefix) ? key : $"{azureContentStoreOptions.Value.Prefix}/{key}";
-
-    private static BlobContainerClient BuildContainerClient(AzureContentStoreOptions options)
-    {
-        if (!string.IsNullOrWhiteSpace(options.StorageAccount) && !string.IsNullOrWhiteSpace(options.AccountKey))
-        {
-            return new(new($"https://{options.StorageAccount}.blob.core.windows.net/{options.ContainerName}"), new StorageSharedKeyCredential(options.StorageAccount, options.AccountKey));
-        }
-
-        if (!string.IsNullOrWhiteSpace(options.StorageAccount))
-        {
-            return new(
-                new($"https://{options.StorageAccount}.blob.core.windows.net/{options.ContainerName}"),
-                new DefaultAzureCredential());
-        }
-
-        if (!string.IsNullOrWhiteSpace(options.ConnectionString))
-        {
-            return new(options.ConnectionString, options.ContainerName);
-        }
-
-        throw new InvalidOperationException($"Configure either '{nameof(options.StorageAccount)}' (with optional '{nameof(options.AccountKey)}') or '{nameof(options.ConnectionString)}'.");
-    }
+    private BlobClient GetBlobClient(string key) =>
+        blobContainerClient.GetBlobClient(string.IsNullOrEmpty(_prefix) ? key : $"{_prefix}/{key}");
 }

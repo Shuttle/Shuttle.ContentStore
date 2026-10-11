@@ -1,5 +1,7 @@
 using System.Text;
 using Azure.Storage.Blobs;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NUnit.Framework;
 using Shuttle.ContentStore.Azure;
@@ -7,29 +9,23 @@ using Shuttle.ContentStore.Azure;
 namespace Shuttle.ContentStore.Tests;
 
 [TestFixture]
-public class AzureContentStoreFixture
+public class AzureContentStoreFixture : ContentStoreFixture
 {
     private const string ConnectionString = "UseDevelopmentStorage=true";
     private const string ContainerName = "content-store-fixture";
-    private BlobContainerClient? _containerClient;
+    private const string OtherContainerName = "content-store-fixture-other";
 
-    [SetUp]
-    public void SetUp()
-    {
-        _containerClient = new(ConnectionString, ContainerName);
-    }
+    private readonly BlobServiceClient _blobServiceClient = new(ConnectionString);
+    private BlobContainerClient Container => _blobServiceClient.GetBlobContainerClient(ContainerName);
+    private BlobContainerClient OtherContainer => _blobServiceClient.GetBlobContainerClient(OtherContainerName);
 
     [TearDown]
     public async Task TearDown()
     {
-        if (_containerClient == null)
-        {
-            return;
-        }
-
         try
         {
-            await _containerClient.DeleteIfExistsAsync();
+            await Container.DeleteIfExistsAsync();
+            await OtherContainer.DeleteIfExistsAsync();
         }
         catch
         {
@@ -37,127 +33,98 @@ public class AzureContentStoreFixture
         }
     }
 
-    private static AzureContentStore CreateContentStore(string prefix = "")
-    {
-        var options = new AzureContentStoreOptions
-        {
-            ConnectionString = ConnectionString,
-            ContainerName = ContainerName,
-            Prefix = prefix
-        };
+    protected override IContentStore CreateContentStore() => CreateContentStore(string.Empty);
 
-        return new(Options.Create(options));
+    private static IContentStore CreateContentStore(string prefix)
+    {
+        var services = new ServiceCollection();
+
+        services.AddContentStore()
+            .AddAzureStore("fixture", account => account.ConnectionString = ConnectionString, store =>
+            {
+                store.ContainerName = ContainerName;
+                store.Prefix = prefix;
+            });
+
+        return services.BuildServiceProvider().GetRequiredService<IContentStore>();
     }
 
     [Test]
-    public async Task Should_be_able_to_put_exists_openread_and_delete_content_without_prefix()
+    public async Task Should_apply_the_prefix_to_the_blob_name()
     {
-        const string key = "test-file.txt";
-        const string contentString = "Hello, World! This is some test content.";
-
-        var store = CreateContentStore();
-
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(contentString));
-
-        await store.PutAsync(key, stream);
-
-        Assert.That(await store.ExistsAsync(key), Is.True);
-
-        var blobClient = _containerClient!.GetBlobClient(key);
-
-        Assert.That((await blobClient.ExistsAsync()).Value, Is.True);
-
-        await using var readStream = await store.OpenReadAsync(key);
-        using var reader = new StreamReader(readStream, Encoding.UTF8);
-        var readContent = await reader.ReadToEndAsync();
-        
-        Assert.That(readContent, Is.EqualTo(contentString));
-
-        await store.DeleteAsync(key);
-
-        Assert.That(await store.ExistsAsync(key), Is.False);
-        Assert.That((await blobClient.ExistsAsync()).Value, Is.False);
-    }
-
-    [Test]
-    public async Task Should_be_able_to_put_exists_openread_and_delete_content_with_prefix()
-    {
-        const string prefix = "fixture-prefix";
         const string key = "test-file-with-prefix.txt";
-        const string contentString = "Hello with prefix!";
 
-        var store = CreateContentStore(prefix);
+        var store = CreateContentStore("/fixture-prefix/");
 
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(contentString));
+        await store.SaveAsync(key, Encoding.UTF8.GetBytes("Hello with prefix!"));
 
-        await store.PutAsync(key, stream);
-
-        Assert.That(await store.ExistsAsync(key), Is.True);
-
-        const string expectedBlobKey = $"{prefix}/{key}";
-        var blobClient = _containerClient!.GetBlobClient(expectedBlobKey);
-        
-        Assert.That((await blobClient.ExistsAsync()).Value, Is.True);
-
-        await using var readStream = await store.OpenReadAsync(key);
-        using var reader = new StreamReader(readStream, Encoding.UTF8);
-        var readContent = await reader.ReadToEndAsync();
-        
-        Assert.That(readContent, Is.EqualTo(contentString));
-
-        await store.DeleteAsync(key);
-
-        Assert.That(await store.ExistsAsync(key), Is.False);
-        Assert.That((await blobClient.ExistsAsync()).Value, Is.False);
-    }
-
-    [Test]
-    public void Should_throw_FileNotFoundException_when_blob_does_not_exist()
-    {
-        var store = CreateContentStore();
-
-        const string nonExistentKey = "does-not-exist.txt";
-
-        var ex = Assert.ThrowsAsync<FileNotFoundException>(async () => await store.OpenReadAsync(nonExistentKey));
-
-        Assert.That(ex!.Message, Does.Contain(nonExistentKey));
+        Assert.That((await Container.GetBlobClient($"fixture-prefix/{key}").ExistsAsync()).Value, Is.True);
     }
 
     [Test]
     public async Task Should_create_container_when_it_does_not_exist_on_first_access()
     {
-        await _containerClient!.DeleteIfExistsAsync();
+        await Container.DeleteIfExistsAsync();
 
-        Assert.That((await _containerClient.ExistsAsync()).Value, Is.False);
+        Assert.That((await Container.ExistsAsync()).Value, Is.False);
 
-        var store = CreateContentStore();
+        await CreateContentStore().SaveAsync("container-creation-test.txt", Encoding.UTF8.GetBytes("content"));
 
-        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("content"));
-
-        await store.PutAsync("container-creation-test.txt", stream);
-
-        Assert.That((await _containerClient.ExistsAsync()).Value, Is.True);
+        Assert.That((await Container.ExistsAsync()).Value, Is.True);
     }
 
     [Test]
-    public async Task Should_overwrite_existing_blob_on_put()
+    public async Task Should_be_able_to_register_multiple_stores_sharing_an_account_from_configuration()
     {
-        var store = CreateContentStore();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Shuttle:ContentStore:Azure:Accounts:local:ConnectionString"] = ConnectionString,
+                ["Shuttle:ContentStore:Azure:Stores:documents:Account"] = "local",
+                ["Shuttle:ContentStore:Azure:Stores:documents:ContainerName"] = ContainerName,
+                ["Shuttle:ContentStore:Azure:Stores:invoices:Account"] = "local",
+                ["Shuttle:ContentStore:Azure:Stores:invoices:ContainerName"] = OtherContainerName,
+                ["Shuttle:ContentStore:Azure:Stores:invoices:Prefix"] = "invoices"
+            })
+            .Build();
 
-        const string key = "overwrite-test.txt";
-        
-        using var stream1 = new MemoryStream(Encoding.UTF8.GetBytes("First Content"));
-        
-        await store.PutAsync(key, stream1);
+        var services = new ServiceCollection();
 
-        using var stream2 = new MemoryStream(Encoding.UTF8.GetBytes("Second Content"));
-        
-        await store.PutAsync(key, stream2);
+        services.AddContentStore().AddAzure(configuration.GetSection(AzureContentStoreOptions.SectionName));
 
-        await using var readStream = await store.OpenReadAsync(key);
-        using var reader = new StreamReader(readStream, Encoding.UTF8);
-        var readContent = await reader.ReadToEndAsync();
+        await using var serviceProvider = services.BuildServiceProvider();
 
-        Assert.That(readContent, Is.EqualTo("Second Content"));
+        var provider = serviceProvider.GetRequiredService<IContentStoreProvider>();
+
+        await provider.Get("documents").SaveAsync("file.txt", Encoding.UTF8.GetBytes("document"));
+        await provider.Get("invoices").SaveAsync("file.txt", Encoding.UTF8.GetBytes("invoice"));
+
+        Assert.That((await Container.GetBlobClient("file.txt").ExistsAsync()).Value, Is.True);
+        Assert.That((await OtherContainer.GetBlobClient("invoices/file.txt").ExistsAsync()).Value, Is.True);
+        Assert.That(await provider.Get("documents").GetTextAsync("file.txt"), Is.EqualTo("document"));
+        Assert.That(await provider.Get("invoices").GetTextAsync("file.txt"), Is.EqualTo("invoice"));
+
+        var clientProvider = serviceProvider.GetRequiredService<IAzureBlobServiceClientProvider>();
+
+        Assert.That(clientProvider.Get("local"), Is.SameAs(clientProvider.Get("local")));
+    }
+
+    [Test]
+    public void Should_fail_validation_when_a_store_references_an_unknown_account()
+    {
+        var services = new ServiceCollection();
+
+        services.AddContentStore()
+            .AddAzureStore("documents", store =>
+            {
+                store.Account = "unknown";
+                store.ContainerName = ContainerName;
+            });
+
+        using var serviceProvider = services.BuildServiceProvider();
+
+        var ex = Assert.Throws<OptionsValidationException>(() => serviceProvider.GetRequiredService<IOptionsMonitor<AzureContentStoreOptions>>().Get("documents"));
+
+        Assert.That(ex!.Message, Does.Contain("unknown"));
     }
 }
